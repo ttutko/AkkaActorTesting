@@ -1,9 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 using Akka.Actor;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace AkkaActorTesting
 {
@@ -11,16 +17,64 @@ namespace AkkaActorTesting
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            CreateHostBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddHostedService<Worker>();
+                })
+                .Build().Run();            
+        }
 
-            var system = ActorSystem.Create("TestSystem");
-            var supervisor = system.ActorOf<MySupervisor>("supervisor");
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            var builder = new HostBuilder();
 
-            supervisor.Tell("Start");
+            builder.UseContentRoot(Directory.GetCurrentDirectory());
+            builder.ConfigureHostConfiguration(config =>
+            {
+                config.AddEnvironmentVariables(prefix: "DOTNET_");
+                if (args != null)
+                {
+                    config.AddCommandLine(args);
+                }
+            });
 
-            system.WhenTerminated.Wait();
+            builder.ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                var env = hostingContext.HostingEnvironment;
+
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+                if (env.IsDevelopment() && !string.IsNullOrEmpty(env.ApplicationName))
+                {
+                    var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                    if (appAssembly != null)
+                    {
+                        config.AddUserSecrets(appAssembly, optional: true);
+                    }
+                }
+
+                config.AddEnvironmentVariables();
+
+                if (args != null)
+                {
+                    config.AddCommandLine(args);
+                }
+            })
+            .ConfigureLogging((hostingContext, logging) =>
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                logging.AddConsole();
+                logging.AddDebug();
+                logging.AddEventSourceLogger();
+            }).UseServiceProviderFactory(new DefaultServiceProviderFactory());
+            
+            return builder;
         }
     }
+
+    
 
     public class MySupervisor : UntypedActor
     {
