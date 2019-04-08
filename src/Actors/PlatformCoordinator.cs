@@ -1,13 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Text;
 using Akka.Actor;
+using AkkaActorTesting.Configuration;
 using AkkaActorTesting.Messages;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 
 namespace AkkaActorTesting.Actors
 {
     public class PlatformCoordinator : ReceiveActor
     {
+        private readonly string baseDir;
+        private readonly string platformName;
+        private readonly string platform;
+        private readonly string pluginType;
+        private readonly string fileid;
+        private readonly string apiVersion;
+        private readonly int pluginCount;
+
         public class ConsoleMessage
         {
             public string Message { get; private set; }
@@ -18,11 +32,29 @@ namespace AkkaActorTesting.Actors
             }
         }
 
-        public PlatformCoordinator()
+        public PlatformCoordinator(IMongoClient mongo, PluginHostConfiguration hostConfig, string baseDir, string platformName, string platform, string pluginType, string fileid, string apiVersion, int pluginCount)
         {
-            Receive<StartMessage>(m =>
+            Receive<StartMessage>(async m =>
             {
-                for(int i = 0; i < 5; i++)
+                // Download and extract the plugin
+                var bucket = new GridFSBucket(mongo.GetDatabase(hostConfig.DatabaseName), new GridFSBucketOptions() { BucketName = "fs" });
+
+                var pluginDir = Directory.CreateDirectory(Path.Combine(baseDir, platformName)).FullName;
+                var pluginFilesDir = Directory.CreateDirectory(Path.Combine(baseDir, "_pluginFiles")).FullName;
+
+                using(var downloadStream = await bucket.OpenDownloadStreamAsync(new ObjectId(fileid)))
+                {
+                    var zipPath = Path.Combine(pluginFilesDir, downloadStream.FileInfo.Filename);
+                    using (var fs = new FileStream(zipPath, FileMode.Create))
+                    {
+                        await downloadStream.CopyToAsync(fs);
+                    }
+                    ZipFile.ExtractToDirectory(zipPath, pluginDir);
+                }
+
+                
+                
+                for (int i = 0; i < 5; i++)
                 {
                     var pluginActor = Context.ActorOf(Props.Create(() => new PythonPlugin(Self, m.EnvironmentVariables)), $"plugin_{i}");
                     pluginActor.Tell("Start");
@@ -33,6 +65,13 @@ namespace AkkaActorTesting.Actors
             {
                 Console.WriteLine($"{Sender.Path}: {m.Message}");
             });
+            this.baseDir = baseDir;
+            this.platformName = platformName;
+            this.platform = platform;
+            this.pluginType = pluginType;
+            this.fileid = fileid;
+            this.apiVersion = apiVersion;
+            this.pluginCount = pluginCount;
         }
 
         //protected override void OnReceive(object message)

@@ -24,7 +24,6 @@ namespace AkkaActorTesting
             CreateHostBuilder(args)
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddHostedService<Worker>();
 
                     services.AddSingleton<IMongoClient>((_) =>
                     {
@@ -35,6 +34,8 @@ namespace AkkaActorTesting
 
                         return client;
                     });
+
+                    services.AddScoped<FakeRepository, FakeRepository>();
 
                     services.AddSingleton<PluginHostConfiguration>((_) =>
                     {
@@ -76,6 +77,8 @@ namespace AkkaActorTesting
 
                         return config;
                     });
+
+                    services.AddHostedService<PluginHostService>();
                 })
                 .Build().Run();            
         }

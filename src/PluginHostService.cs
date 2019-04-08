@@ -6,39 +6,56 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace AkkaActorTesting
 {
-    public class Worker : BackgroundService
+    public class PluginHostService : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<PluginHostService> _logger;
         private readonly IConfiguration _config;
         private readonly IMongoClient mongo;
         private readonly PluginHostConfiguration hostConfig;
+        private readonly FakeRepository repo;
 
         private ActorSystem ActorSystem { get; set; }
         private Dictionary<string, IActorRef> PlatformActors { get; set; }
 
-        public Worker(ILogger<Worker> logger, IConfiguration config, IMongoClient mongo, PluginHostConfiguration hostConfig)
+        public PluginHostService(ILogger<PluginHostService> logger, IConfiguration config, IMongoClient mongo, PluginHostConfiguration hostConfig, FakeRepository repo)
         {
             _logger = logger;
             _config = config;
             this.mongo = mongo;
             this.hostConfig = hostConfig;
+            this.repo = repo;
             PlatformActors = new Dictionary<string, IActorRef>();
+
+            ActorSystem = ActorSystem.Create("PluginSystem");
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            // Get information from configuration
-            ActorSystem = ActorSystem.Create("PluginSystem");
-            var pc = ActorSystem.ActorOf<PlatformCoordinator>("platform1");
-            pc.Tell(new StartMessage("Program.py", new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } }));
+            // Get the list of platforms
+            var platforms = repo.GetPlatforms();
+
+            foreach(var platform in platforms)
+            {
+                // Get the platform settings
+                var platformConfig = hostConfig.Platforms[platform.name];                
+
+                var props = Props.Create(() => new PlatformCoordinator(mongo, hostConfig, Directory.GetCurrentDirectory(), platform.name, platformConfig.Platform, platformConfig.PluginType, platform.fileid, platformConfig.PluginApiVersion, platformConfig.PluginsPerHost));
+                var pc = ActorSystem.ActorOf(props, platform.name);
+                pc.Tell(new StartMessage("Program.py", new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } }));
+            }
+
+            
+            
             return base.StartAsync(cancellationToken);
         }
 
