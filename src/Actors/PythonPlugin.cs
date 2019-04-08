@@ -126,7 +126,7 @@ namespace AkkaActorTesting.Actors
             var tcs = new TaskCompletionSource<ProcessEndedMessage>();
 
             process = new Process();
-            process.StartInfo.FileName = @"C:\Program Files (x86)\Python37-32\python.exe";
+            process.StartInfo.FileName = @"C:\Python37\python.exe";
             process.StartInfo.Arguments = "Program.py";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;
@@ -158,7 +158,7 @@ namespace AkkaActorTesting.Actors
             {
                 if (!String.IsNullOrEmpty(e.Data))
                 {
-                    Parent.Tell(new MySupervisor.ConsoleMessage(e.Data), myself);
+                    Parent.Tell(new PlatformCoordinator.ConsoleMessage(e.Data), myself);
                 }
             });
 
