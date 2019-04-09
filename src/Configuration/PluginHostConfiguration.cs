@@ -10,6 +10,7 @@ namespace AkkaActorTesting.Configuration
         public string InstanceId { get; set; }
         public string ConnectionString { get; set; }
         public string DatabaseName { get; set; }
+        public string PythonPath { get; set; }
         public Dictionary<string, PlatformPluginConfiguration> Platforms { get; private set; }
 
         public PluginHostConfiguration()

@@ -2,6 +2,7 @@
 import os
 import time
 import sys
+import pika
 
 iterations = 0
 max_iters = os.environ.get('SPT_MaxIters', None)

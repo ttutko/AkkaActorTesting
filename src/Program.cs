@@ -56,6 +56,7 @@ namespace AkkaActorTesting
                         config.InstanceId = configDoc["instanceId"].AsString;
                         config.DatabaseName = configDoc["database"]["databaseName"].AsString;
                         config.ConnectionString = configDoc["database"]["connectionString"].AsString;
+                        config.PythonPath = configDoc["pythonPath"].AsString;
                         foreach (var item in configDoc["platformSettings"].AsBsonDocument.Elements)
                         {
                             string platformName = item.Name;

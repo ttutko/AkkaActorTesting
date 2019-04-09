@@ -51,7 +51,7 @@ namespace AkkaActorTesting
 
                 var props = Props.Create(() => new PlatformCoordinator(mongo, hostConfig, Directory.GetCurrentDirectory(), platform.name, platformConfig.Platform, platformConfig.PluginType, platform.fileid, platformConfig.PluginApiVersion, platformConfig.PluginsPerHost));
                 var pc = ActorSystem.ActorOf(props, platform.name);
-                pc.Tell(new StartMessage("Program.py", new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } }));
+                pc.Tell(new StartMessage(platform.pluginPath, platform.envVars));
             }
 
             

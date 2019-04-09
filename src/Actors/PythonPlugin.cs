@@ -6,18 +6,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace AkkaActorTesting.Actors
 {
     public class PythonPlugin : ReceiveActor
     {
+        private readonly string pluginPath;
+
         public IActorRef Parent { get; private set; }
         public Process process { get; internal set; } = null;
-        public IDictionary<string, string> EnvironmentVariables { get; private set; }
+        public IEnumerable<KeyValuePair<string, string>> EnvironmentVariables { get; private set; }
 
-        public PythonPlugin(IActorRef parent, IDictionary<string, string> environmentVariables)
+        public PythonPlugin(IActorRef parent, string pluginPath, IEnumerable<KeyValuePair<string,string>> environmentVariables)
         {
             this.Parent = parent;
+            this.pluginPath = pluginPath;
             this.EnvironmentVariables = environmentVariables;
 
             Receive<string>(m =>
@@ -121,12 +125,21 @@ namespace AkkaActorTesting.Actors
             Console.WriteLine("Post stop");
         }
 
-        private Task<ProcessEndedMessage> DoSomething(IActorRef myself, IDictionary<string, string> env)
+        private Task<ProcessEndedMessage> DoSomething(IActorRef myself, IEnumerable<KeyValuePair<string, string>> env)
         {
             var tcs = new TaskCompletionSource<ProcessEndedMessage>();
 
             process = new Process();
-            process.StartInfo.FileName = @"C:\Python37\python.exe";
+
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                process.StartInfo.FileName = Path.Combine(pluginPath, "_environment", "Scripts", "python.exe");
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                process.StartInfo.FileName = Path.Combine(pluginPath, "_environment", "Scripts", "python");
+            }
+
             process.StartInfo.Arguments = "Program.py";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 using Akka.Actor;
 using AkkaActorTesting.Configuration;
@@ -34,7 +36,7 @@ namespace AkkaActorTesting.Actors
 
         public PlatformCoordinator(IMongoClient mongo, PluginHostConfiguration hostConfig, string baseDir, string platformName, string platform, string pluginType, string fileid, string apiVersion, int pluginCount)
         {
-            Receive<StartMessage>(async m =>
+            ReceiveAsync<StartMessage>(async m =>
             {
                 // Download and extract the plugin
                 var bucket = new GridFSBucket(mongo.GetDatabase(hostConfig.DatabaseName), new GridFSBucketOptions() { BucketName = "fs" });
@@ -49,14 +51,88 @@ namespace AkkaActorTesting.Actors
                     {
                         await downloadStream.CopyToAsync(fs);
                     }
-                    ZipFile.ExtractToDirectory(zipPath, pluginDir);
+                    ZipFile.ExtractToDirectory(zipPath, pluginDir, true);
                 }
 
-                
-                
-                for (int i = 0; i < 5; i++)
+                // Create virtual environment
+                var pythonEnvironmentDir = Path.Combine(pluginDir, "_environment");
+                var process = new Process();
+                process.StartInfo.FileName = hostConfig.PythonPath;
+                process.StartInfo.Arguments = $"-m venv {pythonEnvironmentDir}";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.WorkingDirectory = pluginDir;
+
+                process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
                 {
-                    var pluginActor = Context.ActorOf(Props.Create(() => new PythonPlugin(Self, m.EnvironmentVariables)), $"plugin_{i}");
+                    if (!String.IsNullOrEmpty(e.Data))
+                    {
+                        Console.WriteLine(e.Data);
+                    }
+                });
+
+                //process.Exited += (sender, args) =>
+                //{
+                //    tcs.SetResult(new ProcessEndedMessage(process.ExitCode));
+                //    process.Dispose();
+                //};
+
+                process.EnableRaisingEvents = true;
+
+                process.Start();
+                process.BeginOutputReadLine();
+
+                
+                var result = process.WaitForExit(180000);
+                if(result == false)
+                {
+                    Console.WriteLine("Timeout reached building the plugin python virtual environment!");
+                    throw new PluginException("Error starting the plugin: Timeout reached while building virtual environment.");
+                }
+
+                // Install packages
+                process = new Process();
+
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    process.StartInfo.FileName = Path.Combine(pluginDir, "_environment", "Scripts", "python.exe");
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    process.StartInfo.FileName = Path.Combine(pluginDir, "_environment", "Scripts", "python");
+                }
+
+                process.StartInfo.Arguments = $"-m pip install -r requirements.txt";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.WorkingDirectory = pluginDir;
+
+                process.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
+                {
+                    if (!String.IsNullOrEmpty(e.Data))
+                    {
+                        Console.WriteLine(e.Data);
+                    }
+                });
+
+                process.EnableRaisingEvents = true;
+
+                process.Start();
+                process.BeginOutputReadLine();
+
+
+                result = process.WaitForExit(180000);
+                if (result == false)
+                {
+                    Console.WriteLine("Timeout reached installing packages into the plugin python virtual environment!");
+                    throw new PluginException("Error starting the plugin: Timeout reached while installing packages into the virtual environment.");
+                }
+
+                for (int i = 0; i < pluginCount; i++)
+                {
+                    var pluginActor = Context.ActorOf(Props.Create(() => new PythonPlugin(Self, pluginDir, m.EnvironmentVariables)), $"plugin_{i}");
                     pluginActor.Tell("Start");
                 }
             });
