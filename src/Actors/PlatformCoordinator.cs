@@ -100,7 +100,7 @@ namespace AkkaActorTesting.Actors
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    process.StartInfo.FileName = Path.Combine(pluginDir, "_environment", "Scripts", "python");
+                    process.StartInfo.FileName = Path.Combine(pluginDir, "_environment", "bin", "python3");
                 }
 
                 process.StartInfo.Arguments = $"-m pip install -r requirements.txt";
