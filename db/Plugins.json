@@ -1,0 +1,16 @@
+{ 
+    "_id" : ObjectId("5c72db7564bb6b101c31f859"), 
+    "Name" : "Plugin1", 
+    "PackageFileId" : ObjectId("5c7301b60f3c46679806a015"), 
+    "PluginType" : "python", 
+    "PluginFilename" : "plugin1.py", 
+    "PythonPath" : "C:\\Python37\\python.exe"
+}
+{ 
+    "_id" : ObjectId("5c72dc0345d624101c963f91"), 
+    "Name" : "Plugin2", 
+    "PackageFileId" : ObjectId("5c72db9864bb6b101c31f85a"), 
+    "PluginType" : "python", 
+    "PluginFilename" : "plugin2.py", 
+    "PythonPath" : "C:\\Python37\\python.exe"
+}
