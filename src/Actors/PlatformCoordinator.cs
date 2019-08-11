@@ -34,7 +34,15 @@ namespace AkkaActorTesting.Actors
             }
         }
 
-        public PlatformCoordinator(IMongoClient mongo, PluginHostConfiguration hostConfig, string baseDir, string platformName, string platform, string pluginType, string fileid, string apiVersion, int pluginCount)
+        public PlatformCoordinator(IMongoClient mongo, 
+            PluginHostConfiguration hostConfig, 
+            string baseDir, 
+            string platformName, 
+            string platform, 
+            string pluginType, 
+            string fileid, 
+            string apiVersion, 
+            int pluginCount)
         {
             ReceiveAsync<StartMessage>(async m =>
             {

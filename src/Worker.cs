@@ -1,10 +1,13 @@
 ﻿using Akka.Actor;
 using AkkaActorTesting.Actors;
+using AkkaActorTesting.Configuration;
 using AkkaActorTesting.Messages;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,10 +20,12 @@ namespace AkkaActorTesting
         private ActorSystem ActorSystem { get; set; }
         private List<string> Platforms = new List<string> { "Plat1", "Plat2" };
         private Dictionary<string, IActorRef> PlatformActors { get; set; }
+        private PluginHostConfiguration _config {get;set;}
 
-        public Worker(ILogger<Worker> logger)
+        public Worker(ILogger<Worker> logger, PluginHostConfiguration config)
         {
             _logger = logger;
+            _config = config;
             PlatformActors = new Dictionary<string, IActorRef>();
         }
 
@@ -29,7 +34,16 @@ namespace AkkaActorTesting
             ActorSystem = ActorSystem.Create("PluginSystem");
             foreach(var plat in Platforms)
             {
-                var coordinator = ActorSystem.ActorOf<PlatformCoordinator>(plat);
+                var props = Props.Create<PlatformCoordinator>(
+                    _config,
+                    "./platforms",
+                    "plat",
+                    "python",
+                    "5cabce0d0b1a3c260c2bff6d",
+                    "1.0",
+                    1
+                );
+                var coordinator = ActorSystem.ActorOf(props);
                 PlatformActors.Add(plat, coordinator);
                 coordinator.Tell(new StartMessage("Program.py", new Dictionary<string, string> { { "test", "testvalue" } }));
             }
