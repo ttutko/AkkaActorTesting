@@ -13,6 +13,8 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace AkkaActorTesting
 {
@@ -23,6 +25,8 @@ namespace AkkaActorTesting
         private readonly IMongoClient mongo;
         private readonly PluginHostConfiguration hostConfig;
         private readonly FakeRepository repo;
+        private IConnection _connection;
+        private IModel _channel;
 
         private ActorSystem ActorSystem { get; set; }
         private Dictionary<string, IActorRef> PlatformActors { get; set; }
@@ -37,6 +41,24 @@ namespace AkkaActorTesting
             PlatformActors = new Dictionary<string, IActorRef>();
 
             ActorSystem = ActorSystem.Create("PluginSystem");
+
+            InitRabbitMQ();
+        }
+
+        private void InitRabbitMQ()
+        {
+            var factory = new ConnectionFactory { HostName = "localhost" };
+
+            _connection = factory.CreateConnection();
+
+            _channel = _connection.CreateModel();
+
+            _channel.ExchangeDeclare("plugin_host.exchange", ExchangeType.Topic);
+            // _channel.QueueDeclare("plugin_host.queue", false, false, false, null);
+            // _channel.QueueBind("plugin_host.queue", "plugin_host.exchange", "plugin_host.queue", null);
+            // _channel.BasicQos(0, 1, false);
+
+            //_connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -51,20 +73,29 @@ namespace AkkaActorTesting
 
                 var props = Props.Create(() => new PlatformCoordinator(mongo, hostConfig, Directory.GetCurrentDirectory(), platform.name, platformConfig.Platform, platformConfig.PluginType, platform.fileid, platformConfig.PluginApiVersion, platformConfig.PluginsPerHost));
                 var pc = ActorSystem.ActorOf(props, platform.name);
+                PlatformActors.Add(platform.name, pc);
                 pc.Tell(new StartMessage(platform.pluginPath, platform.envVars));
-            }
-
-            
+            }           
             
             return base.StartAsync(cancellationToken);
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            // while (!stoppingToken.IsCancellationRequested)
+            // {
+            //     _logger.LogInformation($"Worker running at: {DateTime.Now}");
+            //     await Task.Delay(1000, stoppingToken);
+            // }
+            
+            return Task.CompletedTask;
+        }
+
+        private void HandleMessage(string content)
+        {
+            foreach(var pc in PlatformActors.Values)
             {
-                _logger.LogInformation($"Worker running at: {DateTime.Now}");
-                await Task.Delay(1000, stoppingToken);
+                pc.Tell(new MessageQueueMessage(content));
             }
         }
     }

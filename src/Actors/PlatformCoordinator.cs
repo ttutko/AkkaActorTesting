@@ -11,6 +11,7 @@ using AkkaActorTesting.Messages;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
+using RabbitMQ.Client;
 
 namespace AkkaActorTesting.Actors
 {
@@ -23,6 +24,9 @@ namespace AkkaActorTesting.Actors
         private readonly string fileid;
         private readonly string apiVersion;
         private readonly int pluginCount;
+
+        private IConnection _connection;
+        private IModel _channel;
 
         public class ConsoleMessage
         {
@@ -44,6 +48,8 @@ namespace AkkaActorTesting.Actors
             string apiVersion, 
             int pluginCount)
         {
+            InitRabbitMQ();
+
             ReceiveAsync<StartMessage>(async m =>
             {
                 // Download and extract the plugin
@@ -145,6 +151,11 @@ namespace AkkaActorTesting.Actors
                 }
             });
 
+            Receive<MessageQueueMessage>(m =>
+            {
+                Console.WriteLine($"{Sender.Path}: {m.Content}");
+            });
+
             Receive<ConsoleMessage>(m => 
             {
                 Console.WriteLine($"{Sender.Path}: {m.Message}");
@@ -158,6 +169,10 @@ namespace AkkaActorTesting.Actors
             this.pluginCount = pluginCount;
         }
 
+        private void HandleMessage(string content)
+        {
+            //pc.Tell(new MessageQueueMessage(content));
+        }
         //protected override void OnReceive(object message)
         //{
         //    if (message.Equals("Start"))
@@ -180,6 +195,21 @@ namespace AkkaActorTesting.Actors
         //    }
         //}
 
+        private void InitRabbitMQ()
+        {
+            var factory = new ConnectionFactory { HostName = "localhost" };
+
+            _connection = factory.CreateConnection();
+
+            _channel = _connection.CreateModel();
+
+            _channel.ExchangeDeclare("plugin_host.exchange", ExchangeType.Topic);
+            _channel.QueueDeclare($"plugin_host.queue.{platformName}", false, false, false, null);
+            _channel.QueueBind($"plugin_host.queue.{platformName}", "plugin_host.exchange", $"plugin_host.queue.{platfromName}", null);
+            _channel.BasicQos(0, 1, false);
+
+            //_connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;
+        }
         protected override SupervisorStrategy SupervisorStrategy()
         {
             return new OneForOneStrategy(3, TimeSpan.FromSeconds(15), ex =>
