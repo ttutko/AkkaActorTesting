@@ -1,30 +1,4 @@
-{ 
-    "filename" : "plugin1.zip", 
-    "aliases" : null, 
-    "chunkSize" : NumberLong(261120), 
-    "uploadDate" : ISODate("2019-02-24T20:42:30.375+0000"), 
-    "length" : NumberLong(564), 
-    "_id" : ObjectId("5c7301b60f3c46679806a015"), 
-    "contentType" : null, 
-    "md5" : "e3c35ad68367fff690892a8523ec0733"
-}
-{ 
-    "filename" : "myplatform1.zip", 
-    "aliases" : null, 
-    "chunkSize" : NumberLong(261120), 
-    "uploadDate" : ISODate("2019-04-08T22:41:17.736+0000"), 
-    "length" : NumberLong(147212), 
-    "_id" : ObjectId("5cabce0d0b1a3c260c2bff6d"), 
-    "contentType" : "application/zip", 
-    "md5" : "4900639f33f6db5d10ea7e5ff1e4aa5f"
-}
-{ 
-    "filename" : "myplatform2.zip", 
-    "aliases" : null, 
-    "chunkSize" : NumberLong(261120), 
-    "uploadDate" : ISODate("2019-04-08T22:41:23.851+0000"), 
-    "length" : NumberLong(147212), 
-    "_id" : ObjectId("5cabce130b1a3c260c2bff6f"), 
-    "contentType" : "application/zip", 
-    "md5" : "4900639f33f6db5d10ea7e5ff1e4aa5f"
-}
+[
+{ "_id" : { "$oid" : "62cf71f2f302b94b3a3e3aaa" }, "filename" : "myplatform1.zip", "length" : { "$numberLong" : "147212" }, "chunkSize" : 261120, "uploadDate" : { "$date" : "2022-07-14T01:31:30.878+0000" } },
+{ "_id" : { "$oid" : "62cf71f2f302b94b3a3e3aac" }, "filename" : "myplatform2.zip", "length" : { "$numberLong" : "147212" }, "chunkSize" : 261120, "uploadDate" : { "$date" : "2022-07-14T01:31:30.890+0000" } }
+]

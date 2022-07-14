@@ -140,7 +140,7 @@ namespace AkkaActorTesting.Actors
                 process.StartInfo.FileName = Path.Combine(pluginPath, "_environment", "bin", "python3");
             }
 
-            process.StartInfo.Arguments = "Program.py";
+            process.StartInfo.Arguments = Path.Combine(pluginPath, "Program.py");
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardError = true;
             process.StartInfo.RedirectStandardOutput = true;

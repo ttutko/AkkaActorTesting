@@ -47,13 +47,13 @@ namespace AkkaActorTesting
 
         private void InitRabbitMQ()
         {
-            var factory = new ConnectionFactory { HostName = "localhost" };
+            // var factory = new ConnectionFactory { HostName = "localhost" };
 
-            _connection = factory.CreateConnection();
+            // _connection = factory.CreateConnection();
 
-            _channel = _connection.CreateModel();
+            // _channel = _connection.CreateModel();
 
-            _channel.ExchangeDeclare("plugin_host.exchange", ExchangeType.Topic);
+            // _channel.ExchangeDeclare("plugin_host.exchange", ExchangeType.Topic);
             // _channel.QueueDeclare("plugin_host.queue", false, false, false, null);
             // _channel.QueueBind("plugin_host.queue", "plugin_host.exchange", "plugin_host.queue", null);
             // _channel.BasicQos(0, 1, false);

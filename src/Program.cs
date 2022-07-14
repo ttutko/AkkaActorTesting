@@ -14,6 +14,7 @@ using MongoDB.Driver;
 using AkkaActorTesting.Configuration;
 using MongoDB.Bson;
 using System.Linq;
+using RabbitMQ.Client;
 
 namespace AkkaActorTesting
 {

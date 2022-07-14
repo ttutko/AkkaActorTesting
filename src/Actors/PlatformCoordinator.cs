@@ -205,7 +205,7 @@ namespace AkkaActorTesting.Actors
 
             _channel.ExchangeDeclare("plugin_host.exchange", ExchangeType.Topic);
             _channel.QueueDeclare($"plugin_host.queue.{platformName}", false, false, false, null);
-            _channel.QueueBind($"plugin_host.queue.{platformName}", "plugin_host.exchange", $"plugin_host.queue.{platfromName}", null);
+            _channel.QueueBind($"plugin_host.queue.{platformName}", "plugin_host.exchange", $"plugin_host.queue.{platformName}", null);
             _channel.BasicQos(0, 1, false);
 
             //_connection.ConnectionShutdown += RabbitMQ_ConnectionShutdown;

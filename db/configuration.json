@@ -1,24 +1,3 @@
-{ 
-    "_id" : ObjectId("5cab3a1b0b1a3c260c2bff62"), 
-    "applicationId" : "D4E5D53E-C086-41C7-98D8-81482EB67145", 
-    "instanceId" : "1732F766-BF3C-4943-B6CF-2BE782C8E761", 
-    "database" : {
-        "connectionString" : "mongodb://localhost:27017", 
-        "databaseName" : "PluginTesting"
-    }, 
-    "pythonPath" : "C:\\Python37\\python.exe", 
-    "platformSettings" : {
-        "myplatform1" : {
-            "platform" : "myplatform", 
-            "pluginType" : "python", 
-            "pluginApiVersion" : "1.0.0", 
-            "pluginsPerHost" : NumberInt(4)
-        }, 
-        "myplatform2" : {
-            "platform" : "myplatform", 
-            "pluginType" : "python", 
-            "pluginApiVersion" : "1.0.0", 
-            "pluginsPerHost" : NumberInt(2)
-        }
-    }
-}
+[
+{ "_id" : { "$oid" : "62cf6f88f302b94b3a3e3aa8" }, "applicationId" : "D4E5D53E-C086-41C7-98D8-81482EB67145", "instanceId" : "1732F766-BF3C-4943-B6CF-2BE782C8E761", "database" : { "connectionString" : "mongodb://localhost:27017", "databaseName" : "PluginTesting" }, "pythonPath" : "python3", "platformSettings" : { "myplatform1" : { "platform" : "myplatform1", "pluginType" : "python", "pluginApiVersion" : "1.0", "pluginsPerHost" : 2 }, "myplatform2" : { "platform" : "myplatform2", "pluginType" : "python", "pluginApiVersion" : "1.0", "pluginsPerHost" : 4 } } }
+]
